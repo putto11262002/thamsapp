@@ -12,181 +12,315 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Courier New', Courier, Monaco, 'Lucida Console', monospace;
+            background: #000000;
             height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 20px;
+            padding: 0;
+            overflow: hidden;
         }
 
         .chat-container {
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            background: #0a0a0a;
+            border: 1px solid #00ff41;
             width: 100%;
-            max-width: 800px;
-            height: 90vh;
-            max-height: 700px;
+            height: 100vh;
             display: flex;
             flex-direction: column;
             overflow: hidden;
         }
 
         .chat-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px;
-            text-align: center;
-            border-radius: 15px 15px 0 0;
+            background: #000000;
+            color: #00ff41;
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #00ff41;
         }
 
         .chat-header h1 {
-            font-size: 24px;
-            margin-bottom: 5px;
+            font-size: 16px;
+            font-weight: normal;
+            margin-bottom: 3px;
+            letter-spacing: 1px;
         }
 
         .status {
-            font-size: 12px;
-            opacity: 0.9;
+            font-size: 11px;
+            opacity: 0.8;
         }
 
         .status.connected {
-            color: #4ade80;
+            color: #00ff41;
+        }
+
+        .status.connected::before {
+            content: '> ';
         }
 
         .status.disconnected {
-            color: #fca5a5;
+            color: #ff4444;
+        }
+
+        .status.disconnected::before {
+            content: '! ';
         }
 
         .messages-container {
             flex: 1;
             overflow-y: auto;
-            padding: 20px;
-            background: #f9fafb;
+            padding: 15px;
+            background: #0a0a0a;
+            overflow-x: hidden;
+        }
+
+        /* Custom scrollbar for terminal look */
+        .messages-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .messages-container::-webkit-scrollbar-track {
+            background: #000000;
+        }
+
+        .messages-container::-webkit-scrollbar-thumb {
+            background: #00ff41;
+            border-radius: 0;
         }
 
         .message {
-            margin-bottom: 15px;
-            animation: slideIn 0.3s ease-out;
+            margin-bottom: 12px;
+            animation: slideIn 0.2s ease-out;
         }
 
         @keyframes slideIn {
             from {
                 opacity: 0;
-                transform: translateY(10px);
+                transform: translateX(-5px);
             }
             to {
                 opacity: 1;
-                transform: translateY(0);
+                transform: translateX(0);
             }
         }
 
         .message-header {
             display: flex;
             align-items: center;
-            margin-bottom: 5px;
+            margin-bottom: 3px;
+            flex-wrap: wrap;
         }
 
         .message-ip {
-            font-weight: bold;
-            color: #667eea;
-            margin-right: 10px;
-            font-size: 14px;
+            font-weight: normal;
+            color: #00ff41;
+            margin-right: 8px;
+            font-size: 13px;
+        }
+
+        .message-ip::before {
+            content: '[';
+            color: #00ff41;
+        }
+
+        .message-ip::after {
+            content: ']';
+            color: #00ff41;
         }
 
         .message-time {
             font-size: 11px;
-            color: #9ca3af;
+            color: #666666;
         }
 
         .message-content {
-            background: white;
-            padding: 12px 15px;
-            border-radius: 10px;
-            border-left: 3px solid #667eea;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            background: transparent;
+            padding: 5px 0;
+            color: #00ff41;
+            border-left: 2px solid #00ff41;
+            padding-left: 10px;
             word-wrap: break-word;
+            line-height: 1.4;
+            font-size: 14px;
         }
 
         .message.own .message-content {
-            background: #667eea;
-            color: white;
-            border-left: 3px solid #764ba2;
+            background: transparent;
+            color: #00cccc;
+            border-left: 2px solid #00cccc;
         }
 
         .message.own .message-ip {
-            color: #764ba2;
+            color: #00cccc;
         }
 
         .input-container {
-            padding: 20px;
-            background: white;
-            border-top: 1px solid #e5e7eb;
+            padding: 12px 15px;
+            background: #000000;
+            border-top: 1px solid #00ff41;
             display: flex;
-            gap: 10px;
+            gap: 8px;
         }
 
         .message-input {
             flex: 1;
-            padding: 12px 15px;
-            border: 2px solid #e5e7eb;
-            border-radius: 25px;
+            padding: 12px;
+            border: 1px solid #00ff41;
+            background: #0a0a0a;
+            color: #00ff41;
             font-size: 14px;
+            font-family: 'Courier New', Courier, Monaco, 'Lucida Console', monospace;
             outline: none;
-            transition: border-color 0.3s;
+            border-radius: 0;
+            -webkit-appearance: none;
+        }
+
+        .message-input::placeholder {
+            color: #004400;
         }
 
         .message-input:focus {
-            border-color: #667eea;
+            border-color: #00ff41;
+            background: #000000;
         }
 
         .send-button {
-            padding: 12px 30px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 25px;
+            padding: 12px 20px;
+            background: transparent;
+            color: #00ff41;
+            border: 1px solid #00ff41;
             cursor: pointer;
-            font-weight: bold;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        .send-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            font-weight: normal;
+            font-family: 'Courier New', Courier, Monaco, 'Lucida Console', monospace;
+            font-size: 14px;
+            transition: all 0.2s;
+            border-radius: 0;
+            -webkit-appearance: none;
+            min-width: 70px;
         }
 
         .send-button:active {
-            transform: translateY(0);
+            background: #00ff41;
+            color: #000000;
         }
 
         .send-button:disabled {
-            opacity: 0.5;
+            opacity: 0.3;
             cursor: not-allowed;
         }
 
         .loading {
-            text-align: center;
-            padding: 20px;
-            color: #9ca3af;
+            text-align: left;
+            padding: 20px 0;
+            color: #00ff41;
+            font-size: 13px;
+        }
+
+        .loading::before {
+            content: '> ';
         }
 
         .error {
-            background: #fee2e2;
-            color: #dc2626;
-            padding: 10px;
-            margin: 10px 20px;
-            border-radius: 5px;
-            text-align: center;
+            background: transparent;
+            color: #ff4444;
+            padding: 8px;
+            margin: 10px 0;
+            border-left: 2px solid #ff4444;
+            text-align: left;
+            font-size: 13px;
+        }
+
+        .error::before {
+            content: '[ERROR] ';
+        }
+
+        /* Mobile optimizations */
+        @media (min-width: 768px) {
+            body {
+                padding: 20px;
+            }
+
+            .chat-container {
+                max-width: 900px;
+                height: 95vh;
+                max-height: 800px;
+            }
+
+            .chat-header {
+                padding: 15px 20px;
+            }
+
+            .chat-header h1 {
+                font-size: 18px;
+            }
+
+            .messages-container {
+                padding: 20px;
+            }
+
+            .input-container {
+                padding: 15px 20px;
+            }
+
+            .send-button:hover {
+                background: #00ff41;
+                color: #000000;
+            }
+        }
+
+        /* Extra small mobile screens */
+        @media (max-width: 360px) {
+            .chat-header h1 {
+                font-size: 14px;
+            }
+
+            .message-ip {
+                font-size: 12px;
+            }
+
+            .message-content {
+                font-size: 13px;
+            }
+
+            .send-button {
+                padding: 12px 15px;
+                min-width: 60px;
+                font-size: 13px;
+            }
+        }
+
+        /* Landscape mobile optimization */
+        @media (max-height: 500px) and (orientation: landscape) {
+            .chat-header {
+                padding: 8px 15px;
+            }
+
+            .chat-header h1 {
+                font-size: 14px;
+                margin-bottom: 2px;
+            }
+
+            .status {
+                font-size: 10px;
+            }
+
+            .input-container {
+                padding: 8px 15px;
+            }
+
+            .message-input,
+            .send-button {
+                padding: 8px 12px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="chat-container">
         <div class="chat-header">
-            <h1>🌐 Local Network Chat</h1>
+            <h1>LOCAL NETWORK CHAT</h1>
             <div class="status" id="status">Connecting...</div>
         </div>
 
