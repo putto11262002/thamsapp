@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Local Network Chat</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .chat-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 800px;
+            height: 90vh;
+            max-height: 700px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 15px 15px 0 0;
+        }
+
+        .chat-header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .status {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .status.connected {
+            color: #4ade80;
+        }
+
+        .status.disconnected {
+            color: #fca5a5;
+        }
+
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f9fafb;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .message-ip {
+            font-weight: bold;
+            color: #667eea;
+            margin-right: 10px;
+            font-size: 14px;
+        }
+
+        .message-time {
+            font-size: 11px;
+            color: #9ca3af;
+        }
+
+        .message-content {
+            background: white;
+            padding: 12px 15px;
+            border-radius: 10px;
+            border-left: 3px solid #667eea;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            word-wrap: break-word;
+        }
+
+        .message.own .message-content {
+            background: #667eea;
+            color: white;
+            border-left: 3px solid #764ba2;
+        }
+
+        .message.own .message-ip {
+            color: #764ba2;
+        }
+
+        .input-container {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            gap: 10px;
+        }
+
+        .message-input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #e5e7eb;
+            border-radius: 25px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .message-input:focus {
+            border-color: #667eea;
+        }
+
+        .send-button {
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .send-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .send-button:active {
+            transform: translateY(0);
+        }
+
+        .send-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #9ca3af;
+        }
+
+        .error {
+            background: #fee2e2;
+            color: #dc2626;
+            padding: 10px;
+            margin: 10px 20px;
+            border-radius: 5px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <h1>🌐 Local Network Chat</h1>
+            <div class="status" id="status">Connecting...</div>
+        </div>
+
+        <div class="messages-container" id="messages">
+            <div class="loading">Loading messages...</div>
+        </div>
+
+        <div class="input-container">
+            <input
+                type="text"
+                class="message-input"
+                id="messageInput"
+                placeholder="Type your message..."
+                disabled
+            >
+            <button class="send-button" id="sendButton" disabled>Send</button>
+        </div>
+    </div>
+
+    <script>
+        let ws;
+        let clientIP = '';
+        let reconnectAttempts = 0;
+        const maxReconnectAttempts = 5;
+
+        const messagesContainer = document.getElementById('messages');
+        const messageInput = document.getElementById('messageInput');
+        const sendButton = document.getElementById('sendButton');
+        const statusElement = document.getElementById('status');
+
+        // Get WebSocket URL (handle different protocols and hosts)
+        function getWebSocketURL() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            return `${protocol}//${window.location.host}/ws`;
+        }
+
+        // Format timestamp
+        function formatTime(timestamp) {
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+
+            if (diffMins < 1) return 'Just now';
+            if (diffMins < 60) return `${diffMins}m ago`;
+
+            const diffHours = Math.floor(diffMins / 60);
+            if (diffHours < 24) return `${diffHours}h ago`;
+
+            return date.toLocaleString();
+        }
+
+        // Update status display
+        function updateStatus(connected) {
+            if (connected) {
+                statusElement.textContent = `Connected as ${clientIP}`;
+                statusElement.className = 'status connected';
+                messageInput.disabled = false;
+                sendButton.disabled = false;
+                reconnectAttempts = 0;
+            } else {
+                statusElement.textContent = 'Disconnected';
+                statusElement.className = 'status disconnected';
+                messageInput.disabled = true;
+                sendButton.disabled = true;
+            }
+        }
+
+        // Add message to UI
+        function addMessage(message, isOwn = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isOwn ? 'own' : ''}`;
+
+            const headerDiv = document.createElement('div');
+            headerDiv.className = 'message-header';
+
+            const ipSpan = document.createElement('span');
+            ipSpan.className = 'message-ip';
+            ipSpan.textContent = message.client_ip;
+
+            const timeSpan = document.createElement('span');
+            timeSpan.className = 'message-time';
+            timeSpan.textContent = formatTime(message.timestamp);
+
+            headerDiv.appendChild(ipSpan);
+            headerDiv.appendChild(timeSpan);
+
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            contentDiv.textContent = message.content;
+
+            messageDiv.appendChild(headerDiv);
+            messageDiv.appendChild(contentDiv);
+
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Clear messages container
+        function clearMessages() {
+            messagesContainer.innerHTML = '';
+        }
+
+        // Send message
+        function sendMessage() {
+            const content = messageInput.value.trim();
+            if (!content || !ws || ws.readyState !== WebSocket.OPEN) {
+                return;
+            }
+
+            ws.send(JSON.stringify({ content }));
+            messageInput.value = '';
+        }
+
+        // Connect to WebSocket
+        function connect() {
+            const wsURL = getWebSocketURL();
+            console.log('Connecting to:', wsURL);
+
+            ws = new WebSocket(wsURL);
+
+            ws.onopen = () => {
+                console.log('WebSocket connected');
+            };
+
+            ws.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+
+                    switch (data.type) {
+                        case 'connected':
+                            clientIP = data.client_ip;
+                            updateStatus(true);
+                            clearMessages();
+
+                            // Load message history
+                            if (data.history && data.history.length > 0) {
+                                data.history.forEach(msg => {
+                                    addMessage(msg, msg.client_ip === clientIP);
+                                });
+                            } else {
+                                messagesContainer.innerHTML = '<div class="loading">No messages yet. Start the conversation!</div>';
+                            }
+                            break;
+
+                        case 'message':
+                            // Remove "no messages" text if present
+                            const loading = messagesContainer.querySelector('.loading');
+                            if (loading) {
+                                loading.remove();
+                            }
+
+                            addMessage(data.message, data.message.client_ip === clientIP);
+                            break;
+
+                        default:
+                            console.log('Unknown message type:', data.type);
+                    }
+                } catch (error) {
+                    console.error('Error parsing message:', error);
+                }
+            };
+
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+                showError('Connection error. Please check your network.');
+            };
+
+            ws.onclose = () => {
+                console.log('WebSocket disconnected');
+                updateStatus(false);
+
+                // Attempt to reconnect
+                if (reconnectAttempts < maxReconnectAttempts) {
+                    reconnectAttempts++;
+                    const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 10000);
+                    console.log(`Reconnecting in ${delay}ms... (attempt ${reconnectAttempts})`);
+                    setTimeout(connect, delay);
+                } else {
+                    showError('Unable to connect to server. Please refresh the page.');
+                }
+            };
+        }
+
+        // Show error message
+        function showError(message) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error';
+            errorDiv.textContent = message;
+            messagesContainer.appendChild(errorDiv);
+            setTimeout(() => errorDiv.remove(), 5000);
+        }
+
+        // Event listeners
+        sendButton.addEventListener('click', sendMessage);
+
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // Start connection
+        connect();
+    </script>
+</body>
+</html>

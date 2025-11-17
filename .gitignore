@@ -1,0 +1,20 @@
+# Binaries
+chat-app
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary
+*.test
+
+# Output of the go coverage tool
+*.out
+
+# Database files
+*.db
+chat.db
+
+# Go workspace file
+go.work
